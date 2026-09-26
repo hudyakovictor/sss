@@ -1,0 +1,497 @@
+{
+  "schemaVersion": 2,
+  "summary": {
+    "evidenceMode": "session-limited",
+    "evidenceBoundary": {
+      "manifest": {
+        "schemaVersion": 2,
+        "sourceFingerprint": "6cd36b07b6ba7397",
+        "adapterVersion": "qoder-task-loop-source-v2",
+        "platform": "qoder",
+        "selection": {
+          "strategy": "all-eligible",
+          "eligibleCount": 1,
+          "analyzedCount": 1,
+          "confidence": "High"
+        }
+      },
+      "episodeCoverage": {
+        "episodeCount": 0,
+        "editedEpisodeCount": 0,
+        "closedEpisodeCount": 0,
+        "recoveredEpisodeCount": 0
+      },
+      "deliveryEvidenceLevels": [],
+      "sourceGaps": []
+    },
+    "semanticFacets": {
+      "schemaVersion": 1,
+      "status": "supplementary",
+      "entries": [
+        {
+          "id": "session-insight:source-coverage",
+          "kind": "redacted-summary",
+          "episodeRef": null,
+          "status": "candidate",
+          "labels": [
+            "source-coverage",
+            "High"
+          ],
+          "summary": "Analyzed 1 of 1 sessions; 3/6 enabled source roots exist. Use this as the current workspace evidence boundary for final insight cards.",
+          "evidenceRefs": [],
+          "modelVersion": "session-insights-v1"
+        },
+        {
+          "id": "session-insight:validation-behavior",
+          "kind": "redacted-summary",
+          "episodeRef": null,
+          "status": "candidate",
+          "labels": [
+            "validation-behavior",
+            "Low"
+          ],
+          "summary": "No validation command category was observed in the analyzed session sample. Inspect more sessions or add explicit validation guidance before claiming validation-after-edit behavior.",
+          "evidenceRefs": [],
+          "modelVersion": "session-insights-v1"
+        },
+        {
+          "id": "session-insight:post-edit-validation",
+          "kind": "rework-correction",
+          "episodeRef": null,
+          "status": "candidate",
+          "labels": [
+            "post-edit-validation",
+            "Low"
+          ],
+          "summary": "No edit event was observed in the analyzed sample. Inspect more sessions before making claims about edit or validation habits.",
+          "evidenceRefs": [],
+          "modelVersion": "session-insights-v1"
+        },
+        {
+          "id": "session-insight:execution-friction",
+          "kind": "friction-taxonomy",
+          "episodeRef": null,
+          "status": "candidate",
+          "labels": [
+            "execution-friction",
+            "Low"
+          ],
+          "summary": "No strong execution friction signal in the analyzed sample. Keep friction claims narrow unless additional failed commands, rejected actions, or warnings are inspected.",
+          "evidenceRefs": [],
+          "modelVersion": "session-insights-v1"
+        },
+        {
+          "id": "session-insight:tool-mix",
+          "kind": "redacted-summary",
+          "episodeRef": null,
+          "status": "candidate",
+          "labels": [
+            "tool-mix",
+            "High"
+          ],
+          "summary": "Most observed tool: Bash (18). Use this as workflow evidence, then inspect bounded sessions before claiming user intent.",
+          "evidenceRefs": [
+            {
+              "kind": "execution-transcript",
+              "id": "session-insight-5-1",
+              "type": "assistant",
+              "line": 8
+            }
+          ],
+          "modelVersion": "session-insights-v1"
+        },
+        {
+          "id": "session-insight:session-usage-efficiency",
+          "kind": "redacted-summary",
+          "episodeRef": null,
+          "status": "candidate",
+          "labels": [
+            "session-usage-efficiency",
+            "High"
+          ],
+          "summary": "The analysis covered 1 sessions: none met the active-long threshold. This activity describes effort only; token or credit evidence is incomplete and does not establish model preference, quality, or savings.",
+          "evidenceRefs": [],
+          "modelVersion": "session-insights-v1"
+        }
+      ]
+    },
+    "learningCapture": {
+      "schemaVersion": 1,
+      "state": "N/A",
+      "summary": "N/A — requires two comparable observation windows and an intervention comparison.",
+      "interventions": []
+    },
+    "aiAgentPractice": {
+      "inspectedSurfaces": [
+        "Rules",
+        "Skills",
+        "Workflows"
+      ],
+      "coverageRows": [
+        {
+          "surface": "Rules",
+          "scopes": [
+            "Project"
+          ],
+          "count": 1,
+          "paths": [
+            "AGENTS.md"
+          ]
+        },
+        {
+          "surface": "Skills",
+          "scopes": [
+            "Plugin"
+          ],
+          "count": 4,
+          "paths": [
+            "~/.qoder/plugins/cache/qoder-bundler/better-harness/skills/better-harness/SKILL.md",
+            "~/.qoder/plugins/cache/qoder-bundler/computer-use/skills/computer-use/SKILL.md",
+            "~/.qoder/plugins/cache/qoder-bundler/qoder-create-plugin/skills/create-plugin/SKILL.md",
+            "~/.qoder/plugins/cache/qoderapp-bundler/qoder-context/1.0.61.d5594762/skills/qoder-context-knowledge-plan/SKILL.md"
+          ]
+        },
+        {
+          "surface": "Hooks",
+          "scopes": [
+            "Plugin"
+          ],
+          "count": 5,
+          "paths": [
+            "~/.qoder/plugins/cache/qoderapp-bundler/qoder-context/1.0.61.d5594762/hooks/hooks.json"
+          ]
+        },
+        {
+          "surface": "MCP",
+          "scopes": [
+            "Plugin"
+          ],
+          "count": 2,
+          "paths": [
+            "~/.qoder/plugins/cache/qoder-bundler/computer-use/.mcp.json",
+            "~/.qoder/plugins/cache/qoderapp-bundler/qoder-context/1.0.61.d5594762/mcp.json"
+          ]
+        },
+        {
+          "surface": "Workflows",
+          "scopes": [
+            "Project"
+          ],
+          "count": 1,
+          "paths": [
+            ".github/workflows/ci.yml"
+          ]
+        },
+        {
+          "surface": "Plugins",
+          "scopes": [
+            "Plugin"
+          ],
+          "count": 4,
+          "paths": [
+            "~/.qoder/plugins/cache/qoder-bundler/better-harness/.qoder-plugin/plugin.json",
+            "~/.qoder/plugins/cache/qoder-bundler/computer-use/.qoder-plugin/plugin.json",
+            "~/.qoder/plugins/cache/qoderapp-bundler/qoder-context/1.0.61.d5594762/.qoder-plugin/plugin.json",
+            "~/.qoder/plugins/cache/qoder-bundler/qoder-create-plugin"
+          ]
+        },
+        {
+          "surface": "Memories",
+          "scopes": [
+            "Project",
+            "Global"
+          ],
+          "count": 9
+        },
+        {
+          "surface": "Commands",
+          "scopes": [
+            "Project"
+          ],
+          "count": 0
+        },
+        {
+          "surface": "Custom Agents",
+          "scopes": [
+            "Project"
+          ],
+          "count": 0
+        }
+      ],
+      "repositorySourceRows": [
+        {
+          "surface": "Skills",
+          "provider": "claude",
+          "owner": ".claude",
+          "count": 1,
+          "paths": [
+            ".claude/skills/signal-arena/SKILL.md"
+          ]
+        }
+      ],
+      "memoryDetails": {
+        "contentPolicy": "metadata-only",
+        "scanState": "scanned-present",
+        "scopeCounts": [
+          {
+            "scope": "Project",
+            "count": 8
+          },
+          {
+            "scope": "Global",
+            "count": 1
+          }
+        ],
+        "integrity": {
+          "status": "reviewed",
+          "titleCount": 9,
+          "reviewedTitleCount": 9,
+          "truncated": false,
+          "exactCollisionGroups": 0,
+          "similarityCandidates": 0
+        }
+      }
+    },
+    "usageActivity": {
+      "schemaVersion": 2,
+      "dateBasis": "UTC",
+      "measurementBasis": "session-starts-active-estimate-model-active-session-days-skill-invocations-and-loads",
+      "truncated": false,
+      "dates": [
+        "2026-09-25"
+      ],
+      "sessions": {
+        "total": 1,
+        "starts": [
+          1
+        ],
+        "activeMinutes": [
+          4.8
+        ]
+      },
+      "models": [],
+      "skills": []
+    },
+    "usageEfficiency": {
+      "schemaVersion": 2,
+      "selection": {
+        "strategy": "all-eligible",
+        "eligibleSessionCount": 1,
+        "analyzedSessionCount": 1,
+        "complete": true
+      },
+      "roles": {
+        "userThreadCandidateCount": 0,
+        "childAgentCandidateCount": 1
+      },
+      "longSessions": {
+        "activeCount": 0,
+        "wallOnlyCount": 0,
+        "longestActiveMinutes": 0,
+        "activeRatio": 0,
+        "estimate": {
+          "method": "capped-event-gap",
+          "activeThresholdMinutes": 45,
+          "gapCapMinutes": 5,
+          "idleGapMinutes": 30
+        },
+        "samples": []
+      },
+      "accounting": {
+        "mode": "effort-proxy",
+        "responseCount": 0,
+        "modelAttributedResponseCount": 0,
+        "unattributedResponseCount": 0,
+        "usageFieldObservedCount": 0,
+        "nonZeroUsageCount": 0,
+        "exactCreditsAvailable": false,
+        "pricingVersion": null
+      },
+      "modelUsage": [],
+      "outcomeReview": {
+        "status": "not-applicable",
+        "reviewedCandidateCount": 0,
+        "reviewedActiveLongCount": 0,
+        "comparableModelOutcomeEvidence": false,
+        "recommendation": "controlled-a-b-required"
+      }
+    },
+    "projectName": "Signal Arena",
+    "locale": "en",
+    "modelId": "agent-work-loop-v4",
+    "reportContractVersion": 26,
+    "overview": "Session-limited Agent Work Loop review (one eligible Qoder session in the 30-day window, read-only): the written agent contract and the behavioral API test layer are real strengths, but the CI acceptance pipeline is currently blocked by a failing asset gate, two boundary validators are broken or vacuous, the only actively changing surface has no wired check, and declared context routes point at deleted paths.",
+    "dimensions": [
+      {
+        "id": "task-understanding",
+        "label": "Task Understanding",
+        "score": 58,
+        "summary": "AGENTS.md is the active, routing-rich entrypoint whose declared targets resolve, but two checked-in instruction sources state one canonical invariant in contradictory terms, the context map points at a deleted app, and the live change deletes its own acceptance evidence.",
+        "findingRefs": [
+          "instruction-invariant-terminology-conflict",
+          "client-boundary-validator-dead-target",
+          "stale-context-routes-misdirect-startup",
+          "acceptance-evidence-deleted-without-owner"
+        ]
+      },
+      {
+        "id": "controlled-execution",
+        "label": "Controlled Execution",
+        "score": 62,
+        "summary": "Workspace commands are discoverable and the test, lint, and typecheck surface was exercised read-only during this review; environment setup still has declared holes (no .env.example, no doctor route, README lists nonexistent run commands).",
+        "findingRefs": [
+          "api-runtime-failures-undiagnosable",
+          "stale-context-routes-misdirect-startup"
+        ]
+      },
+      {
+        "id": "change-validation",
+        "label": "Change Validation",
+        "score": 48,
+        "summary": "A real behavioral e2e layer over the API authority boundary passes 10/10 locally, yet the client-boundary validator targets a deleted path, four CI steps exit green matching nothing, the actively changed UI surface has no wired check, and runtime 500s discard their cause.",
+        "findingRefs": [
+          "client-boundary-validator-dead-target",
+          "active-ui-surface-unwired-validation",
+          "api-runtime-failures-undiagnosable"
+        ]
+      },
+      {
+        "id": "reliable-delivery",
+        "label": "Reliable Delivery",
+        "score": 42,
+        "summary": "The single verify job cannot pass: the asset gate exits 1 before the later steps, so no current revision reaches a complete acceptance decision, and the work in progress simultaneously deletes the project's own acceptance, status, and checksum evidence for the foundation-v1 track.",
+        "findingRefs": [
+          "asset-manifest-gate-failure-blocks-pipeline",
+          "ci-client-filter-steps-vacuously-green",
+          "acceptance-evidence-deleted-without-owner"
+        ]
+      },
+      {
+        "id": "learning-capture",
+        "label": "Learning Capture",
+        "score": 45,
+        "summary": "Memory integrity reviewed all nine titles with zero collisions, and the repository learning route (AGENTS.md plus the overlay and archive skills) is wired through the contract; the session and workflow-demand windows remain not-evaluable (single episode, 3 of 6 source roots), so recurrence and capture decisions stay unresolved for a later window.",
+        "findingRefs": []
+      }
+    ],
+    "assignmentSummaries": []
+  },
+  "findings": [
+    {
+      "id": "instruction-invariant-terminology-conflict",
+      "title": "Two checked-in instruction sources state one economy invariant in contradictory terms",
+      "severity": "Low",
+      "reason": "AGENTS.md line 44 and the routed project overlay .claude/skills/signal-arena/SKILL.md line 48 describe the same canonical rule with different vocabulary: Coins/XP/Energy/Mastery Stars versus Pips and Stars never change score. Both files are checked-in routing targets, so an agent entering through either source enforces differently named economy terms, and the overlay duplicates roughly eight to ten further invariant bullets verbatim — a live instance of the drift that duplication enables. Uncertainty: this may be an intentional rename settled elsewhere; docs/ owners were not opened within this lane's asset limit.",
+      "dimensionRefs": [
+        "task-understanding"
+      ],
+      "aiFixPrompt": "/better-harness fix this issue\n\nResolve the economy-invariant terminology between AGENTS.md and .claude/skills/signal-arena/SKILL.md: compare both against the canonical economy owner (docs/economy_monetization_referrals.md per the docs hierarchy), correct the stale wording in the non-canonical copy, and keep the two sources' invariant lists aligned or point one at the other instead of duplicating.\n\n## Validation\n\n- Both files state the economy invariant with the canonical currency terms\n- A text diff of the two invariant lists shows no other same-rule divergence",
+      "expectedArtifact": "Rule",
+      "expectedOutput": [
+        "Update the existing Rule owner identified by the reviewed evidence and retain a focused validation result."
+      ]
+    },
+    {
+      "id": "asset-manifest-gate-failure-blocks-pipeline",
+      "title": "A stale asset-manifest entry blocks every CI gate that follows it",
+      "severity": "High",
+      "reason": "pnpm validate:assets exits 1 on the first missing file (assets/skill-cards/c01_market_structure.jpg) because the manifest declares 80 .jpg entries while the 40 skill-card files on disk are .svg; the 40 entity portraits resolve. The script aborts at the first miss, so the reported blast radius is always one regardless of drift size. In .github/workflows/ci.yml this gate runs before the public-client validator, build, and client steps, so no current revision can reach a complete acceptance decision — every later signal is suppressed by the failure. Uncertainty: observed in the local working tree; no CI run history was opened, and which side (.jpg intent or .svg reality) the project treats as canonical is undeclared.",
+      "dimensionRefs": [
+        "reliable-delivery"
+      ],
+      "aiFixPrompt": "/better-harness fix this issue\n\nReconcile assets/asset-manifest.json with the tracked skill-card files (.svg on disk versus .jpg in the manifest) following docs/asset_provenance_and_workflow.md, so pnpm validate:assets passes. Consider a report-all mode in scripts/validate-assets.ts instead of throwing on the first miss. Declaring .svg or .jpg canonical is a project decision; confirm it with the asset owner before changing references.\n\n## Validation\n\n- pnpm validate:assets exits 0\n- The next CI run reaches the steps that follow the asset gate",
+      "expectedArtifact": "Gate",
+      "expectedOutput": [
+        "Update the existing Gate owner identified by the reviewed evidence and retain a focused validation result."
+      ]
+    },
+    {
+      "id": "client-boundary-validator-dead-target",
+      "title": "The client-boundary invariant has no working mechanical check",
+      "severity": "Medium",
+      "reason": "scripts/validate-public-client.ts hard-codes apps/client-prototype/src, an app deleted in 45a61830; the validator exits 1 with ENOENT (observed). In CI it was the only mechanical guard for the AGENTS.md invariant that a client never connects directly to the database or external providers and never decides score, entitlement, or payment authority. That canonical boundary is now enforced only server-side through contracts validation and projection assertions. Uncertainty: whether client-prototype is permanently retired or awaiting a successor is undeclared; whether the correct end state is a repointed target or a recorded removal is a project decision.",
+      "dimensionRefs": [
+        "change-validation",
+        "task-understanding"
+      ],
+      "aiFixPrompt": "/better-harness fix this issue\n\nFirst establish the client architecture status with the project owner: whether apps/client-prototype is retired or a successor client is planned. Then either repoint scripts/validate-public-client.ts at the active client surface, or remove the dead gate and record where the client-boundary invariant is enforced instead in AGENTS.md and docs.\n\n## Validation\n\n- pnpm validate:public-client exits 0 against a real target, or the gate's removal is recorded with its replacement owner\n- CI no longer fails on this validator",
+      "expectedArtifact": "Gate",
+      "expectedOutput": [
+        "Update the existing Gate owner identified by the reviewed evidence and retain a focused validation result."
+      ]
+    },
+    {
+      "id": "ci-client-filter-steps-vacuously-green",
+      "title": "Four CI steps exit green while checking nothing",
+      "severity": "High",
+      "reason": "package.json defines client:typecheck, client:lint, client:test, and client:build as pnpm --filter @signal-arena/client-prototype, a workspace package that no longer exists. The observed local run prints 'No projects matched the filters' and exits 0, and .github/workflows/ci.yml turns each into a green step. Once the two failing gates ahead are fixed, a green job will carry four vacuous checks, and its implied claims about client typecheck, lint, test, and build verification stay unsupported. Uncertainty: the exit-0 behavior was observed with the repo-pinned pnpm 11.9.0 on this machine; CI ordering currently prevents these steps from being reached, so no false green has been observed in CI itself.",
+      "dimensionRefs": [
+        "reliable-delivery"
+      ],
+      "aiFixPrompt": "/better-harness fix this issue\n\nUpdate or remove the client:* filter steps in .github/workflows/ci.yml so CI verifies packages that actually exist, deciding the client suite's fate together with the client-boundary validator repair. Add a guard so a pnpm filter matching zero workspace projects fails the step instead of passing silently.\n\n## Validation\n\n- Each CI step maps to an existing workspace package\n- A filter that matches zero workspace projects fails the step",
+      "expectedArtifact": "Workflow",
+      "expectedOutput": [
+        "Update the existing Workflow owner identified by the reviewed evidence and retain a focused validation result."
+      ]
+    },
+    {
+      "id": "active-ui-surface-unwired-validation",
+      "title": "The surface actively changing today is excluded from every wired check",
+      "severity": "Medium",
+      "reason": "Root tsconfig.json excludes apps/design-system-lab and packages/ui-game, so pnpm typecheck and pnpm build never see them; .github/workflows/ci.yml has no design-system step even though package.json defines design-system:typecheck and design-system:build; there are zero .tsx test files and no Storybook or visual-regression configuration anywhere. The uncommitted preloader change (index.html markup, a motion and prefers-reduced-motion dismissal branch in src/main.tsx, about ten new CSS rules) therefore reaches HEAD checked only by the three-rule non-type-aware ESLint pass. A runnable baseline exists: tsc --noEmit -p apps/design-system-lab/tsconfig.json exits 0 when invoked manually, but nothing invokes it. Uncertainty: design-system-lab may be an intentionally non-production lab surface, and no inspected owner states its acceptance bar.",
+      "dimensionRefs": [
+        "change-validation"
+      ],
+      "aiFixPrompt": "/better-harness fix this issue\n\nWire the design-system-lab checks into the existing validation surface: add design-system:typecheck and design-system:build steps to .github/workflows/ci.yml and decide whether the root tsconfig exclusion stays. Ask the project owner whether design-system-lab is a lab or production surface and record its acceptance bar in docs.\n\n## Validation\n\n- pnpm design-system:typecheck and pnpm design-system:build run in CI\n- The next UI change is covered by a wired check",
+      "expectedArtifact": "Workflow",
+      "expectedOutput": [
+        "Update the existing Workflow owner identified by the reviewed evidence and retain a focused validation result."
+      ]
+    },
+    {
+      "id": "api-runtime-failures-undiagnosable",
+      "title": "A runtime 500 on the API core path discards its own cause",
+      "severity": "Medium",
+      "reason": "apps/api-server/src/server.ts builds Fastify with logger: false, which the installed fastify logger factory maps to a no-op abstract logger, so every server.log call discards its record; the x-request-id header is emitted but never logged, so no server-side record joins a failing request to its cause; two 500 paths collapse distinct errors into a bare {error: \"auth_failed\"} while one leg string-sniffs the error message to choose 409 versus 422 and returns it to the client; and a failed startup exits non-zero after a no-op log call. The e2e layer proves what an endpoint returns but cannot show why it failed, blocking the diagnose step of the failure-repair loop on the path AGENTS.md declares most sensitive. Uncertainty: verified for the focused-test profile only; a deployment-layer log sink outside the repo may exist and is exactly what the no-op logger would then rely on.",
+      "dimensionRefs": [
+        "change-validation",
+        "controlled-execution"
+      ],
+      "aiFixPrompt": "/better-harness fix this issue\n\nRestore a readable diagnostic route on the API core path: configure a Fastify logger (level and redaction for auth fields) or a small logging facade in apps/api-server/src/server.ts, log the request id on error, preserve the caught cause on the 500 paths instead of discarding it, and replace the message-sniffing status choice with typed error classes.\n\n## Validation\n\n- The tests/e2e run still passes\n- A forced failing request yields a readable, request-id-correlated server log line",
+      "expectedArtifact": "Code",
+      "expectedOutput": [
+        "Update the existing Code owner identified by the reviewed evidence and retain a focused validation result."
+      ]
+    },
+    {
+      "id": "stale-context-routes-misdirect-startup",
+      "title": "Mandatory context routes lead an agent to deleted and nonexistent targets",
+      "severity": "Medium",
+      "reason": "docs/directory_map.md still lists ten apps/client-prototype/* paths and names viewport-qa.json as the browser, responsive, and accessibility evidence owner, while that app is deleted from HEAD and the live UI app design-system-lab is absent from the map. README.md documents pnpm dev:client, dev:crm, and dev:landing, none of which exist in package.json, and instructs assembling .env from an .env.example that is neither tracked nor present on disk. An agent following the AGENTS.md mandatory startup order is routed to dead targets exactly where it must locate evidence owners and start commands. Uncertainty: the README labels its command list as future work, so part of it may be deliberate aspiration.",
+      "dimensionRefs": [
+        "task-understanding",
+        "controlled-execution"
+      ],
+      "aiFixPrompt": "/better-harness fix this issue\n\nUpdate docs/directory_map.md and the README.md run section to the current tree: remove or mark the retired client-prototype entries, name the apps/design-system-lab owner path, decide where viewport-qa evidence now lives, and either add the documented .env.example or correct the .env assembly note to the actual required environment variables.\n\n## Validation\n\n- Every command and route in README.md resolves against package.json scripts\n- No nonexistent path remains in docs/directory_map.md",
+      "expectedArtifact": "Document",
+      "expectedOutput": [
+        "Update the existing Document owner identified by the reviewed evidence and retain a focused validation result."
+      ]
+    },
+    {
+      "id": "acceptance-evidence-deleted-without-owner",
+      "title": "Work in progress deletes its own acceptance evidence while adding behavior no check covers",
+      "severity": "Medium",
+      "reason": "The uncommitted diff removes all eleven docs/design-system/foundation-v1 files — ACCEPTANCE, HANDOFF, STATUS-CLOSED, INTEGRATION-NOTE, README, SOURCE-CHECKSUMS, and the six screen previews — the evidence form AGENTS.md requires (\"No feature is accepted without tests, checklist, evidence, and explicit status\"), in the same change that adds the design-system-lab preloader behavior. No replacement owner exists (no remaining tracked file references foundation-v1) and no inspected gate detects the removal. The originals stay recoverable from HEAD, so the consequence is the loss of the acceptance-evidence path rather than of data. Uncertainty: intent — relocation, re-formatting, or a superseded-v1 retirement — is undeclared.",
+      "dimensionRefs": [
+        "reliable-delivery",
+        "task-understanding"
+      ],
+      "aiFixPrompt": "/better-harness fix this issue\n\nDecide the fate of the foundation-v1 acceptance evidence with the project owner — relocate it to the current docs structure, record its retirement, or restore the files — and state the decision in the change's completion report per AGENTS.md. Do not commit the deletion silently.\n\n## Validation\n\n- A named owner path for the design-system acceptance and status evidence is recorded\n- The change's completion report states the decision and an explicit status",
+      "expectedArtifact": "Document",
+      "expectedOutput": [
+        "Update the existing Document owner identified by the reviewed evidence and retain a focused validation result."
+      ]
+    }
+  ]
+}

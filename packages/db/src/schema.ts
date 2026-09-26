@@ -7,6 +7,7 @@ import {
   primaryKey,
   sqliteTable,
   text,
+  unique,
   uniqueIndex
 } from "drizzle-orm/sqlite-core";
 
@@ -159,3 +160,53 @@ export const scenarioRuns = sqliteTable(
     )
   })
 );
+
+export const ledgerEvents = sqliteTable(
+  "ledger_events",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    kind: text("kind").notNull(),
+    amount: integer("amount").notNull(),
+    promo: integer("promo").notNull().default(0),
+    runId: text("run_id"),
+    idempotencyKey: text("idempotency_key").notNull(),
+    createdAt: text("created_at").notNull()
+  },
+  (table) => ({
+    userReference: foreignKey({
+      columns: [table.userId],
+      foreignColumns: [users.userId],
+      name: "ledger_events_user_fk"
+    }),
+    runReference: foreignKey({
+      columns: [table.runId],
+      foreignColumns: [scenarioRuns.runId],
+      name: "ledger_events_run_fk"
+    }),
+    kindCheck: check(
+      "ledger_event_kind",
+      sql`${table.kind} IN ('coin_reward_xp', 'coin_spend', 'coin_referral_activation', 'coin_referral_purchase_bonus', 'energy_regen', 'mastery_star_grant')`
+    ),
+    promoCheck: check("ledger_event_promo", sql`${table.promo} IN (0, 1)`),
+    userIdempotencyUnique: unique("ledger_events_user_idempotency_unique").on(
+      table.userId,
+      table.idempotencyKey
+    ),
+    userCreatedIndex: index("idx_ledger_events_user_created").on(
+      table.userId,
+      table.createdAt
+    )
+  })
+);
+
+export const userEconomyState = sqliteTable("user_economy_state", {
+  userId: text("user_id").primaryKey(),
+  xp: integer("xp").notNull().default(0),
+  coins: integer("coins").notNull().default(0),
+  promoCoins: integer("promo_coins").notNull().default(0),
+  masteryStars: integer("mastery_stars").notNull().default(0),
+  energy: integer("energy").notNull().default(5),
+  energyUpdatedAt: text("energy_updated_at").notNull(),
+  version: integer("version").notNull().default(0)
+});

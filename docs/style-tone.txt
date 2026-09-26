@@ -1,3 +1,10 @@
+Status: REQUIRED
+Scope: player-facing text voice, Academy copy, debriefs and UI language
+Owner: Signal Arena project owner
+Last reviewed: 2026-09-16
+Supersedes: none
+Required evidence: terminology review, localization review and copy QA
+Canonical dependencies: `academy_plan.md`, `full_game_spec.md`
 
 Твой стиль можно сформулировать так:
 

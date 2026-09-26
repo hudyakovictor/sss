@@ -179,163 +179,163 @@
     },
     {
       "assetId": "skill_card_c01_market_structure_art",
-      "path": "assets/skill-cards/c01_market_structure.jpg"
+      "path": "assets/skill-cards/c01_market_structure.svg"
     },
     {
       "assetId": "skill_card_c02_higher_timeframe_art",
-      "path": "assets/skill-cards/c02_higher_timeframe.jpg"
+      "path": "assets/skill-cards/c02_higher_timeframe.svg"
     },
     {
       "assetId": "skill_card_c03_volume_confirmation_art",
-      "path": "assets/skill-cards/c03_volume_confirmation.jpg"
+      "path": "assets/skill-cards/c03_volume_confirmation.svg"
     },
     {
       "assetId": "skill_card_c04_liquidity_map_art",
-      "path": "assets/skill-cards/c04_liquidity_map.jpg"
+      "path": "assets/skill-cards/c04_liquidity_map.svg"
     },
     {
       "assetId": "skill_card_c05_volatility_context_art",
-      "path": "assets/skill-cards/c05_volatility_context.jpg"
+      "path": "assets/skill-cards/c05_volatility_context.svg"
     },
     {
       "assetId": "skill_card_c06_correlation_check_art",
-      "path": "assets/skill-cards/c06_correlation_check.jpg"
+      "path": "assets/skill-cards/c06_correlation_check.svg"
     },
     {
       "assetId": "skill_card_c07_derivatives_pulse_art",
-      "path": "assets/skill-cards/c07_derivatives_pulse.jpg"
+      "path": "assets/skill-cards/c07_derivatives_pulse.svg"
     },
     {
       "assetId": "skill_card_c08_news_context_art",
-      "path": "assets/skill-cards/c08_news_context.jpg"
+      "path": "assets/skill-cards/c08_news_context.svg"
     },
     {
       "assetId": "skill_card_c09_social_sentiment_art",
-      "path": "assets/skill-cards/c09_social_sentiment.jpg"
+      "path": "assets/skill-cards/c09_social_sentiment.svg"
     },
     {
       "assetId": "skill_card_c10_macro_context_art",
-      "path": "assets/skill-cards/c10_macro_context.jpg"
+      "path": "assets/skill-cards/c10_macro_context.svg"
     },
     {
       "assetId": "skill_card_c11_onchain_flow_art",
-      "path": "assets/skill-cards/c11_onchain_flow.jpg"
+      "path": "assets/skill-cards/c11_onchain_flow.svg"
     },
     {
       "assetId": "skill_card_c12_tokenomics_review_art",
-      "path": "assets/skill-cards/c12_tokenomics_review.jpg"
+      "path": "assets/skill-cards/c12_tokenomics_review.svg"
     },
     {
       "assetId": "skill_card_c13_unlock_calendar_art",
-      "path": "assets/skill-cards/c13_unlock_calendar.jpg"
+      "path": "assets/skill-cards/c13_unlock_calendar.svg"
     },
     {
       "assetId": "skill_card_c14_infrastructure_risk_art",
-      "path": "assets/skill-cards/c14_infrastructure_risk.jpg"
+      "path": "assets/skill-cards/c14_infrastructure_risk.svg"
     },
     {
       "assetId": "skill_card_c15_source_quality_art",
-      "path": "assets/skill-cards/c15_source_quality.jpg"
+      "path": "assets/skill-cards/c15_source_quality.svg"
     },
     {
       "assetId": "skill_card_c16_enter_now_art",
-      "path": "assets/skill-cards/c16_enter_now.jpg"
+      "path": "assets/skill-cards/c16_enter_now.svg"
     },
     {
       "assetId": "skill_card_c17_wait_for_retest_art",
-      "path": "assets/skill-cards/c17_wait_for_retest.jpg"
+      "path": "assets/skill-cards/c17_wait_for_retest.svg"
     },
     {
       "assetId": "skill_card_c18_define_entry_zone_art",
-      "path": "assets/skill-cards/c18_define_entry_zone.jpg"
+      "path": "assets/skill-cards/c18_define_entry_zone.svg"
     },
     {
       "assetId": "skill_card_c19_define_invalidation_art",
-      "path": "assets/skill-cards/c19_define_invalidation.jpg"
+      "path": "assets/skill-cards/c19_define_invalidation.svg"
     },
     {
       "assetId": "skill_card_c20_set_structural_stop_art",
-      "path": "assets/skill-cards/c20_set_structural_stop.jpg"
+      "path": "assets/skill-cards/c20_set_structural_stop.svg"
     },
     {
       "assetId": "skill_card_c21_target_liquidity_art",
-      "path": "assets/skill-cards/c21_target_liquidity.jpg"
+      "path": "assets/skill-cards/c21_target_liquidity.svg"
     },
     {
       "assetId": "skill_card_c22_minimum_r_multiple_art",
-      "path": "assets/skill-cards/c22_minimum_r_multiple.jpg"
+      "path": "assets/skill-cards/c22_minimum_r_multiple.svg"
     },
     {
       "assetId": "skill_card_c23_scale_out_art",
-      "path": "assets/skill-cards/c23_scale_out.jpg"
+      "path": "assets/skill-cards/c23_scale_out.svg"
     },
     {
       "assetId": "skill_card_c24_no_trade_is_a_decision_art",
-      "path": "assets/skill-cards/c24_no_trade_is_a_decision.jpg"
+      "path": "assets/skill-cards/c24_no_trade_is_a_decision.svg"
     },
     {
       "assetId": "skill_card_c25_evidence_only_art",
-      "path": "assets/skill-cards/c25_evidence_only.jpg"
+      "path": "assets/skill-cards/c25_evidence_only.svg"
     },
     {
       "assetId": "skill_card_c26_noise_quarantine_art",
-      "path": "assets/skill-cards/c26_noise_quarantine.jpg"
+      "path": "assets/skill-cards/c26_noise_quarantine.svg"
     },
     {
       "assetId": "skill_card_c27_risk_first_mode_art",
-      "path": "assets/skill-cards/c27_risk_first_mode.jpg"
+      "path": "assets/skill-cards/c27_risk_first_mode.svg"
     },
     {
       "assetId": "skill_card_c28_no_confirmation_no_trade_art",
-      "path": "assets/skill-cards/c28_no_confirmation_no_trade.jpg"
+      "path": "assets/skill-cards/c28_no_confirmation_no_trade.svg"
     },
     {
       "assetId": "skill_card_c29_higher_timeframe_check_art",
-      "path": "assets/skill-cards/c29_higher_timeframe_check.jpg"
+      "path": "assets/skill-cards/c29_higher_timeframe_check.svg"
     },
     {
       "assetId": "skill_card_c30_after_a_loss_art",
-      "path": "assets/skill-cards/c30_after_a_loss.jpg"
+      "path": "assets/skill-cards/c30_after_a_loss.svg"
     },
     {
       "assetId": "skill_card_c31_discipline_over_profit_art",
-      "path": "assets/skill-cards/c31_discipline_over_profit.jpg"
+      "path": "assets/skill-cards/c31_discipline_over_profit.svg"
     },
     {
       "assetId": "skill_card_c32_out_of_market_is_normal_art",
-      "path": "assets/skill-cards/c32_out_of_market_is_normal.jpg"
+      "path": "assets/skill-cards/c32_out_of_market_is_normal.svg"
     },
     {
       "assetId": "skill_card_c33_news_is_not_a_signal_art",
-      "path": "assets/skill-cards/c33_news_is_not_a_signal.jpg"
+      "path": "assets/skill-cards/c33_news_is_not_a_signal.svg"
     },
     {
       "assetId": "skill_card_c34_wait_for_stabilization_art",
-      "path": "assets/skill-cards/c34_wait_for_stabilization.jpg"
+      "path": "assets/skill-cards/c34_wait_for_stabilization.svg"
     },
     {
       "assetId": "skill_card_c35_do_not_chase_art",
-      "path": "assets/skill-cards/c35_do_not_chase.jpg"
+      "path": "assets/skill-cards/c35_do_not_chase.svg"
     },
     {
       "assetId": "skill_card_c36_avoid_revenge_trading_art",
-      "path": "assets/skill-cards/c36_avoid_revenge_trading.jpg"
+      "path": "assets/skill-cards/c36_avoid_revenge_trading.svg"
     },
     {
       "assetId": "skill_card_c37_no_averaging_without_a_plan_art",
-      "path": "assets/skill-cards/c37_no_averaging_without_a_plan.jpg"
+      "path": "assets/skill-cards/c37_no_averaging_without_a_plan.svg"
     },
     {
       "assetId": "skill_card_c38_risk_cap_art",
-      "path": "assets/skill-cards/c38_risk_cap.jpg"
+      "path": "assets/skill-cards/c38_risk_cap.svg"
     },
     {
       "assetId": "skill_card_c39_confidence_check_art",
-      "path": "assets/skill-cards/c39_confidence_check.jpg"
+      "path": "assets/skill-cards/c39_confidence_check.svg"
     },
     {
       "assetId": "skill_card_c40_preserve_the_system_art",
-      "path": "assets/skill-cards/c40_preserve_the_system.jpg"
+      "path": "assets/skill-cards/c40_preserve_the_system.svg"
     },
     {
       "assetId": "ui_skill_tree",
@@ -363,7 +363,7 @@
     },
     {
       "assetId": "topbar_preview_mockup",
-      "path": "assets/ui/topbar.png"
+      "path": "assets/ui/topbar/topbar.png"
     }
   ]
 }

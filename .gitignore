@@ -8,3 +8,8 @@ coverage/
 var/
 .DS_Store
 *.zip
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+.playwright-browsers/

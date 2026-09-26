@@ -71,14 +71,14 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Client prototype typecheck
-        run: pnpm client:typecheck
+      - name: Design system typecheck
+        run: pnpm design-system:typecheck
 
-      - name: Client prototype lint
-        run: pnpm client:lint
+      - name: Design system build
+        run: pnpm design-system:build
 
-      - name: Client prototype tests
-        run: pnpm client:test
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
 
-      - name: Client prototype build
-        run: pnpm client:build
+      - name: Browser E2E + API integration (Playwright)
+        run: pnpm test:browser

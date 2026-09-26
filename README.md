@@ -32,31 +32,39 @@ acceptance criteria
 ## Текущий статус
 
 ```text
-Phase: Executable foundation / production vertical slice not yet accepted
+Phase: Executable foundation / first technical vertical slice accepted locally
 Documentation and executable foundation: tracked in docs/developing_status.md
 Executable foundation: PASS
+First real vertical slice (technical, API-wired): ACCEPTED_LOCAL (Iteration 03)
 Production vertical slice: NOT YET ACCEPTED
 Overall product: BLOCKED
 Primary platform: Telegram Mini App
 Primary payment: Telegram Stars/XTR
 Primary chain target: none in MVP
-Current priority: authentication boundary → scoring fixtures/service → historical provider adapters → Phaser vertical slice
+Current priority:
+Academy Level 0
+→ challenge verification
+→ learning progression
+→ decision telemetry
+→ Personal Insight
+→ delayed transfer
 ```
 
-Не начинать полноценный production-polish клиента, пока не закрыт vertical slice:
+Технический scenario loop (auth → scenario → decision → seal → reveal → score → XP/Mastery) закрыт на уровне `ACCEPTED_LOCAL` вместе с Playwright-доказательствами. Следующий незакрытый разрыв — продуктовый: обучающий цикл ещё не существует. Приоритет Iteration 04:
 
 ```text
-auth
-→ Arena Hub
-→ scenario
-→ Decision Workspace
-→ decision lock
-→ server reveal
-→ score breakdown
-→ Personal Insight
-→ persistence
-→ CRM visibility
+Level 0
+→ микроурок
+→ worked example
+→ guided practice
+→ «Я это знаю — проверить» (Challenge Test)
+→ подтверждение навыка (server-authoritative)
+→ Arena Transfer
+→ Decision Telemetry
+→ Personal Insight v0
+→ delayed rematch
 ```
+
 
 ## Главные документы
 

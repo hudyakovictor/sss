@@ -38,16 +38,26 @@ test("migrations are idempotent and create the foundation schema", () => {
     .all() as Array<{ name: string }>;
 
 
-  assert.equal(before.count, 3);
-  assert.equal(after.count, 3);
+  assert.equal(before.count, 7);
+  assert.equal(after.count, 7);
   assert.deepEqual(tables.map((table) => table.name), [
     "_migrations",
     "auth_replay_keys",
     "auth_sessions",
+    "decision_events",
     "historical_snapshots",
+    "learning_attempts",
+    "learning_modules",
+    "ledger_events",
+    "reward_grants",
+    "scenario_completions",
     "scenario_runs",
     "scenarios",
+    "user_economy_state",
     "user_identities",
+    "user_module_progress",
+    "user_scenario_mastery",
+    "user_skill_state",
     "users"
   ]);
 

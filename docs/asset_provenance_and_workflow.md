@@ -165,3 +165,15 @@ Run visual, responsive, accessibility, reduced-motion, typecheck, lint, tests,
 and build checks relevant to the task.
 Return evidence and acceptance status.
 ```
+
+## 9. Pending provenance queue
+
+Files that exist on disk but are intentionally **not** registered in `assets/asset-manifest.json` until the owner confirms origin. Any code that references them is out of spec until this queue is cleared.
+
+| Path | Discovered | Blocking question |
+|---|---|---|
+| `assets/logopng.png` | 2026-09-26 | Original for Signal Arena, generated for Signal Arena, or licensed? If none of these, delete. |
+| `assets/logosamall.png` | 2026-09-26 | Same as above. |
+| `assets/ui/signal_arena_icon_96_transparent.png` | 2026-09-26 | Same as above; likely a resized derivative — confirm source and license of the parent. |
+
+Owner decision required before these can enter the manifest, before the preloader or any branded surface may reference them, and before Iteration 03 asset-release approval can proceed. Until then the branded preloader in `apps/design-system-lab` uses only CSS-drawn tokens from `packages/ui-game` and does not depend on any file in this queue.

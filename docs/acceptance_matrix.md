@@ -3,7 +3,7 @@
 Status: REQUIRED
 Scope: product and release acceptance gates
 Owner: Signal Arena project owner
-Last reviewed: 2026-09-16
+Last reviewed: 2026-09-26
 Supersedes: none
 Required evidence: valid gate/evidence records for the relevant commit, environment, contract version and fixture version
 Canonical dependencies: `developing_status.md`, `roadmap_and_release_control_plane.md`, `security_architecture.md`, `deployment_and_environments.md`
@@ -14,6 +14,11 @@ Canonical dependencies: `developing_status.md`, `roadmap_and_release_control_pla
 | Auth | Telegram identity verified server-side; replay rejected; session revocation works |
 | Scenarios | Hidden future server-only; content/rubric/data versions fixed |
 | Scoring | Golden fixtures pass; process score independent of lucky outcome |
+| Learning loop | Theory → worked example → guided practice → verification is server-driven; opening a Challenge never closes a topic; reading theory never grants mastery |
+| Skill verification | A `verified` status is written only by a server re-score of a sealed decision against named critical gates; a failed check never downgrades a confirmed skill |
+| Arena Transfer | Transfer is gated on `verified` and yields provisional mastery (`review_due`) only; `mastered` requires a later delayed rematch, never a single test |
+| Decision telemetry | Append-only, per-user idempotent, self-scoped timeline; closed event allowlist rejects hidden/future/score data; ingest never changes economy or progression |
+| Personal insight | Deterministic (no AI/LLM claim); never concludes from fewer than two independent observations; every insight is explainable by referenced run ids and feature values |
 | Database | Migration applies; indexes and uniqueness constraints exist; restore tested |
 | Payments | Duplicate webhook creates one entitlement; order state is auditable |
 | Refunds | Refund/revoke behavior defined and tested |

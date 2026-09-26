@@ -8,20 +8,66 @@ import {
   HistoricalMarketSnapshotSchema,
   ScenarioPackageSchema,
   ScoreResultSchema,
+  KIND_ASSET,
+  LedgerEventSchema,
+  UserEconomyStateSchema,
   type DecisionTrace,
   type HistoricalMarketSnapshot,
+  type LedgerAsset,
+  type LedgerEvent,
+  type LedgerPage,
+  type RiskState,
   type ScenarioPackage,
-  type ScoreResult
+  type ScoreResult,
+  type UserEconomyState
 } from "../../contracts/src/index.js";
+import {
+  applyEnergyRegen,
+  energyCostForMode,
+  keyConditionsMetForBreakdown,
+  masteryStarsForScore,
+  xpForCompletion,
+  xpGrantedAfterDailyCap,
+  XP_REPEAT_WINDOW_MS
+} from "../../domain/src/economy.js";
 import { applyPostgresMigrations } from "./postgres-migrations.js";
+import {
+  AcademyModuleSchema,
+  type AcademyModule,
+  type LearningPublicationStatus,
+  type LearningStatus,
+  type VerificationSource
+} from "../../contracts/src/learning.js";
 import type {
-  AuthSessionRecord,
-  CreateAuthSessionInput,
-  CreateScenarioRunInput,
-  HistoricalSnapshotRecord,
-  PlatformIdentityInput,
-  ScenarioRunRecord,
-  ScenarioRunState
+  DecisionEventType,
+  TelemetryPayload
+} from "../../contracts/src/telemetry.js";
+import {
+  applyLedgerEventToState,
+  ENERGY_CAP,
+  type AppendDecisionEventsResult,
+  type AppendLedgerEventInput,
+  type AppendLedgerEventResult,
+  type ListLedgerEventsOptions,
+  type AuthSessionRecord,
+  type CreateAuthSessionInput,
+  type CreateLearningAttemptInput,
+  type CreateScenarioRunInput,
+  type DecisionEventRecord,
+  type FinalizeLearningAttemptInput,
+  type HistoricalSnapshotRecord,
+  type LearningAttemptRecord,
+  type LearningModuleRecord,
+  type ModuleProgressRecord,
+  type PlatformIdentityInput,
+  type ScenarioCompletionRewardsInput,
+  type ScenarioCompletionRewardsResult,
+  type ScenarioRunRecord,
+  type ScenarioRunState,
+  type StartEligibleRunInput,
+  type StartEligibleRunResult,
+  type UpsertLearningModuleInput,
+  type UpsertModuleProgressInput
 } from "./repository.js";
 import type { PersistencePort } from "./ports.js";
 
@@ -55,6 +101,22 @@ type ScenarioRunDbRow = {
   sealedAt: unknown;
   revealedAt: unknown;
   completedAt: unknown;
+};
+
+type LedgerDbRow = {
+  id: string;
+  userId: string;
+  kind: string;
+  asset: string;
+  amount: number;
+  reason: string;
+  promo: boolean;
+  runId: string | null;
+  scenarioId: string | null;
+  sourceId: string | null;
+  riskState: string;
+  idempotencyKey: string;
+  createdAt: unknown;
 };
 
 function sql(executor: SqlQueryable | PoolClient): SqlQueryable {
@@ -138,6 +200,22 @@ const SCENARIO_RUN_SELECT = `
     revealed_at AS "revealedAt",
     completed_at AS "completedAt"
   FROM scenario_runs
+`;
+
+const LEDGER_EVENT_SELECT_COLUMNS = `
+    id,
+    user_id AS "userId",
+    kind,
+    asset,
+    amount,
+    reason,
+    promo,
+    run_id AS "runId",
+    scenario_id AS "scenarioId",
+    source_id AS "sourceId",
+    risk_state AS "riskState",
+    idempotency_key AS "idempotencyKey",
+    created_at AS "createdAt"
 `;
 
 export class PostgresPersistenceAdapter implements PersistencePort {
@@ -472,8 +550,26 @@ export class PostgresPersistenceAdapter implements PersistencePort {
   }
 
   public async createScenarioRun(input: CreateScenarioRunInput): Promise<ScenarioRunRecord> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN;");
+      const run = await this.createScenarioRunOn(client, input);
+      await client.query("COMMIT;");
+      return run;
+    } catch (error) {
+      await client.query("ROLLBACK;");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  private async createScenarioRunOn(
+    executor: SqlQueryable,
+    input: CreateScenarioRunInput
+  ): Promise<ScenarioRunRecord> {
     const createdAt = new Date().toISOString();
-    await queryRows(this.pool, `
+    await queryRows(executor, `
       INSERT INTO scenario_runs (
         run_id,
         user_id,
@@ -493,7 +589,7 @@ export class PostgresPersistenceAdapter implements PersistencePort {
       createdAt
     ]);
 
-    const record = (await queryRows<ScenarioRunDbRow>(this.pool, `
+    const record = (await queryRows<ScenarioRunDbRow>(executor, `
       ${SCENARIO_RUN_SELECT}
       WHERE idempotency_key = $1
     `, [input.idempotencyKey]))[0];
@@ -510,6 +606,17 @@ export class PostgresPersistenceAdapter implements PersistencePort {
       throw new Error(`Idempotency key is bound to a different scenario run: ${input.idempotencyKey}`);
     }
     return result;
+  }
+
+  private async getScenarioRunByIdempotencyKey(
+    executor: SqlQueryable,
+    idempotencyKey: string
+  ): Promise<ScenarioRunRecord | undefined> {
+    const row = (await queryRows<ScenarioRunDbRow>(executor, `
+      ${SCENARIO_RUN_SELECT}
+      WHERE idempotency_key = $1
+    `, [idempotencyKey]))[0];
+    return row ? readScenarioRunRow(row) : undefined;
   }
 
   public async getScenarioRun(
@@ -627,5 +734,823 @@ export class PostgresPersistenceAdapter implements PersistencePort {
     } finally {
       client.release();
     }
+  }
+
+  private async readEconomyState(
+    executor: SqlQueryable,
+    userId: string
+  ): Promise<UserEconomyState | undefined> {
+    const row = (await queryRows<{
+      userId: string;
+      xp: number;
+      coins: number;
+      promoCoins: number;
+      masteryStars: number;
+      energy: number;
+      energyUpdatedAt: unknown;
+      version: number;
+    }>(executor, `
+      SELECT
+        user_id AS "userId",
+        xp,
+        coins,
+        promo_coins AS "promoCoins",
+        mastery_stars AS "masteryStars",
+        energy,
+        energy_updated_at AS "energyUpdatedAt",
+        version
+      FROM user_economy_state
+      WHERE user_id = $1
+    `, [userId]))[0];
+    if (!row) {
+      return undefined;
+    }
+    return UserEconomyStateSchema.parse({
+      userId: row.userId,
+      xp: row.xp,
+      coins: row.coins,
+      promoCoins: row.promoCoins,
+      masteryStars: row.masteryStars,
+      energy: row.energy,
+      energyUpdatedAt: readRequiredTimestamp(row.energyUpdatedAt),
+      version: row.version
+    });
+  }
+
+  private async ensureEconomyStateRow(
+    executor: SqlQueryable,
+    userId: string,
+    now: string
+  ): Promise<UserEconomyState> {
+    await queryRows(executor, `
+      INSERT INTO user_economy_state (user_id, energy_updated_at)
+      VALUES ($1, $2)
+      ON CONFLICT (user_id) DO NOTHING
+    `, [userId, now]);
+    const state = await this.readEconomyState(executor, userId);
+    if (!state) {
+      throw new Error(`Economy state was not initialized for user: ${userId}`);
+    }
+    return state;
+  }
+
+  private mapLedgerRow(row: LedgerDbRow): LedgerEvent {
+    return LedgerEventSchema.parse({
+      id: row.id,
+      userId: row.userId,
+      kind: row.kind,
+      asset: row.asset,
+      amount: row.amount,
+      reason: row.reason,
+      promo: row.promo,
+      runId: row.runId,
+      scenarioId: row.scenarioId,
+      sourceId: row.sourceId,
+      riskState: row.riskState,
+      idempotencyKey: row.idempotencyKey,
+      createdAt: readRequiredTimestamp(row.createdAt)
+    });
+  }
+
+  private async selectLedgerEvent(
+    executor: SqlQueryable,
+    userId: string,
+    idempotencyKey: string
+  ): Promise<LedgerEvent | undefined> {
+    const row = (await queryRows<LedgerDbRow>(executor, `SELECT ${LEDGER_EVENT_SELECT_COLUMNS} FROM ledger_events WHERE user_id = $1 AND idempotency_key = $2`, [userId, idempotencyKey]))[0];
+    return row ? this.mapLedgerRow(row) : undefined;
+  }
+
+  private async writeEconomyStateRow(
+    executor: SqlQueryable,
+    state: UserEconomyState
+  ): Promise<void> {
+    await queryRows(executor, `
+      UPDATE user_economy_state
+      SET xp = $1, coins = $2, promo_coins = $3, mastery_stars = $4, energy = $5,
+          energy_updated_at = $6, version = $7
+      WHERE user_id = $8
+    `, [
+      state.xp,
+      state.coins,
+      state.promoCoins,
+      state.masteryStars,
+      state.energy,
+      state.energyUpdatedAt,
+      state.version,
+      state.userId
+    ]);
+  }
+
+  public async getEconomyState(userId: string): Promise<UserEconomyState | undefined> {
+    return this.readEconomyState(this.pool, userId);
+  }
+
+  public async ensureEconomyState(userId: string, now?: string): Promise<UserEconomyState> {
+    return this.ensureEconomyStateRow(this.pool, userId, now ?? new Date().toISOString());
+  }
+
+  /**
+   * Append one ledger event inside an already-open transaction. Mirrors the
+   * SQLite repository: the cached projection advances only on a real insert; a
+   * replayed key with the same payload returns the prior result, and a key
+   * reused with a different payload throws `ledger_idempotency_conflict`.
+   */
+  private async appendLedgerEventOn(
+    client: PoolClient,
+    input: AppendLedgerEventInput
+  ): Promise<AppendLedgerEventResult> {
+    const createdAt = input.createdAt ?? new Date().toISOString();
+    const runId = input.runId ?? null;
+    const scenarioId = input.scenarioId ?? null;
+    const sourceId = input.sourceId ?? null;
+    const riskState: RiskState = input.riskState ?? "clear";
+    const asset: LedgerAsset = KIND_ASSET[input.kind];
+    const id = input.id ?? randomUUID();
+
+    await this.ensureEconomyStateRow(client, input.userId, createdAt);
+
+    const existing = await this.selectLedgerEvent(client, input.userId, input.idempotencyKey);
+    if (existing) {
+      const matches =
+        existing.kind === input.kind &&
+        existing.asset === asset &&
+        existing.amount === input.amount &&
+        existing.promo === input.promo &&
+        (existing.runId ?? null) === runId &&
+        (existing.scenarioId ?? null) === scenarioId &&
+        (existing.sourceId ?? null) === sourceId;
+      if (!matches) {
+        throw new Error(`ledger_idempotency_conflict: ${input.idempotencyKey}`);
+      }
+      const state = (await this.readEconomyState(client, input.userId))!;
+      return { event: existing, state, created: false };
+    }
+
+    await queryRows(client, `
+      INSERT INTO ledger_events (
+        id, user_id, kind, asset, amount, reason, promo, run_id,
+        scenario_id, source_id, risk_state, idempotency_key, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    `, [
+      id,
+      input.userId,
+      input.kind,
+      asset,
+      input.amount,
+      input.reason,
+      input.promo,
+      runId,
+      scenarioId,
+      sourceId,
+      riskState,
+      input.idempotencyKey,
+      createdAt
+    ]);
+
+    const base = (await this.readEconomyState(client, input.userId))!;
+    const next = applyLedgerEventToState(base, {
+      kind: input.kind,
+      amount: input.amount,
+      promo: input.promo
+    });
+    await this.writeEconomyStateRow(client, next);
+
+    const event = (await this.selectLedgerEvent(client, input.userId, input.idempotencyKey))!;
+    const state = (await this.readEconomyState(client, input.userId))!;
+    return { event, state, created: true };
+  }
+
+  public async appendLedgerEvent(
+    input: AppendLedgerEventInput
+  ): Promise<AppendLedgerEventResult> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN;");
+      const result = await this.appendLedgerEventOn(client, input);
+      await client.query("COMMIT;");
+      return result;
+    } catch (error) {
+      await client.query("ROLLBACK;");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Lazily regenerate Energy inside an open transaction, preserving the partial
+   * interval remainder via an idempotent `energy_regenerated` event keyed by the
+   * new anchor epoch. When the bar is already full the anchor moves to `now`
+   * without a grant event.
+   */
+  private async applyLazyRegenOn(
+    client: PoolClient,
+    userId: string,
+    now: string
+  ): Promise<UserEconomyState> {
+    const state = await this.ensureEconomyStateRow(client, userId, now);
+    const elapsedMs = Math.max(0, Date.parse(now) - Date.parse(state.energyUpdatedAt));
+    if (elapsedMs === 0) return state;
+
+    const regen = applyEnergyRegen(state.energy, elapsedMs);
+
+    if (regen.energy === state.energy) {
+      if (state.energy >= ENERGY_CAP) {
+        const reanchored = UserEconomyStateSchema.parse({ ...state, energyUpdatedAt: now });
+        await this.writeEconomyStateRow(client, reanchored);
+        return reanchored;
+      }
+      return state;
+    }
+
+    const newAnchorMs = Date.parse(state.energyUpdatedAt) + regen.advancedMs;
+    await this.appendLedgerEventOn(client, {
+      userId,
+      kind: "energy_regenerated",
+      amount: regen.energy - state.energy,
+      reason: "timer_regen",
+      promo: false,
+      idempotencyKey: `energy:regen:${userId}:${newAnchorMs}`,
+      createdAt: now
+    });
+    const after = (await this.readEconomyState(client, userId))!;
+    const withAnchor = UserEconomyStateSchema.parse({
+      ...after,
+      energyUpdatedAt: new Date(newAnchorMs).toISOString()
+    });
+    await this.writeEconomyStateRow(client, withAnchor);
+    return withAnchor;
+  }
+
+  /**
+   * Read-only projection of balance with regeneration applied for display; never
+   * persists, so `GET /balance` stays side-effect free with respect to the ledger.
+   */
+  public async projectEconomyState(userId: string, now?: string): Promise<UserEconomyState> {
+    const timestamp = now ?? new Date().toISOString();
+    const state =
+      (await this.readEconomyState(this.pool, userId)) ??
+      (await this.ensureEconomyStateRow(this.pool, userId, timestamp));
+    const elapsedMs = Math.max(0, Date.parse(timestamp) - Date.parse(state.energyUpdatedAt));
+    const regen = applyEnergyRegen(state.energy, elapsedMs);
+    if (regen.energy === state.energy) return state;
+    return UserEconomyStateSchema.parse({ ...state, energy: regen.energy });
+  }
+
+  public async startEligibleScenarioRun(
+    input: StartEligibleRunInput
+  ): Promise<StartEligibleRunResult> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN;");
+      const now = input.occurredAt ?? new Date().toISOString();
+      const state = await this.applyLazyRegenOn(client, input.userId, now);
+
+      const existing = await this.getScenarioRunByIdempotencyKey(client, input.idempotencyKey);
+      if (existing) {
+        if (existing.userId !== input.userId) {
+          throw new Error(`Idempotency key is bound to a different scenario run: ${input.idempotencyKey}`);
+        }
+        await client.query("COMMIT;");
+        return { run: existing, state, energySpent: 0, insufficientEnergy: false };
+      }
+
+      const cost = energyCostForMode(input.scenarioMode);
+      if (cost > state.energy) {
+        await client.query("COMMIT;");
+        return { run: null, state, energySpent: 0, insufficientEnergy: true };
+      }
+
+      // Create the run first so a spend event can reference it via the ledger
+      // `run_id` foreign key; both happen in this one transaction.
+      const run = await this.createScenarioRunOn(client, {
+        runId: input.runId,
+        userId: input.userId,
+        scenarioId: input.scenarioId,
+        scenarioVersion: input.scenarioVersion,
+        idempotencyKey: input.idempotencyKey
+      });
+
+      if (cost > 0) {
+        await this.appendLedgerEventOn(client, {
+          userId: input.userId,
+          kind: "energy_spent",
+          amount: -cost,
+          reason: "arena_launch",
+          promo: false,
+          runId: input.runId,
+          scenarioId: input.scenarioId,
+          idempotencyKey: `energy:spend:${input.runId}`,
+          createdAt: now
+        });
+      }
+
+      const finalState = (await this.readEconomyState(client, input.userId))!;
+      await client.query("COMMIT;");
+      return { run, state: finalState, energySpent: cost, insufficientEnergy: false };
+    } catch (error) {
+      await client.query("ROLLBACK;");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  public async applyScenarioCompletionRewards(
+    input: ScenarioCompletionRewardsInput
+  ): Promise<ScenarioCompletionRewardsResult> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN;");
+      const now = input.occurredAt ?? new Date().toISOString();
+      await this.ensureEconomyStateRow(client, input.userId, now);
+
+      const prior = (await queryRows<{
+        rewardGrantId: string;
+        xpGranted: number;
+        masteryDelta: number;
+      }>(client, `
+        SELECT
+          reward_grant_id AS "rewardGrantId",
+          xp_granted AS "xpGranted",
+          mastery_delta AS "masteryDelta"
+        FROM reward_grants
+        WHERE user_id = $1 AND run_id = $2
+      `, [input.userId, input.runId]))[0];
+
+      if (prior) {
+        const state = (await this.readEconomyState(client, input.userId))!;
+        await client.query("COMMIT;");
+        return {
+          granted: false,
+          rewardGrantId: prior.rewardGrantId,
+          xpGranted: prior.xpGranted,
+          masteryDelta: prior.masteryDelta,
+          events: [],
+          state
+        };
+      }
+
+      const comp = (await queryRows<{
+        completions: number;
+        bestScore: number;
+        lastCompletedAt: unknown;
+      }>(client, `
+        SELECT
+          completions,
+          best_score AS "bestScore",
+          last_completed_at AS "lastCompletedAt"
+        FROM scenario_completions
+        WHERE user_id = $1 AND scenario_id = $2 AND scenario_version = $3
+      `, [input.userId, input.scenarioId, input.scenarioVersion]))[0];
+
+      const firstCompletion = !comp;
+      const withinWindow = comp
+        ? Date.parse(now) - Date.parse(readRequiredTimestamp(comp.lastCompletedAt)) <= XP_REPEAT_WINDOW_MS
+        : false;
+      const qualifiesForReduced = comp ? input.qualityScore > comp.bestScore : false;
+      const desiredXp = xpForCompletion({
+        qualityScore: input.qualityScore,
+        firstCompletion,
+        withinWindow,
+        qualifiesForReduced
+      });
+
+      const todayRow = (await queryRows<{ total: number }>(client, `
+        SELECT COALESCE(SUM(amount), 0)::int AS total
+        FROM ledger_events
+        WHERE user_id = $1
+          AND kind = 'xp_awarded'
+          AND created_at::date = ($2::timestamptz)::date
+      `, [input.userId, now]))[0];
+      const todayXp = todayRow?.total ?? 0;
+      const xpGranted = xpGrantedAfterDailyCap(desiredXp, todayXp);
+
+      const events: LedgerEvent[] = [];
+      if (xpGranted > 0) {
+        const xpEvent = await this.appendLedgerEventOn(client, {
+          userId: input.userId,
+          kind: "xp_awarded",
+          amount: xpGranted,
+          reason: "scenario_completion",
+          promo: false,
+          runId: input.runId,
+          scenarioId: input.scenarioId,
+          idempotencyKey: `run:${input.runId}:xp`,
+          createdAt: now
+        });
+        events.push(xpEvent.event);
+      }
+
+      const earnedStars = masteryStarsForScore({
+        completed: true,
+        qualityScore: input.qualityScore,
+        keyConditionsMet: keyConditionsMetForBreakdown(input.breakdown)
+      });
+      const prevMastery = (await queryRows<{ bestStars: number }>(client, `
+        SELECT best_stars AS "bestStars"
+        FROM user_scenario_mastery
+        WHERE user_id = $1 AND scenario_id = $2
+      `, [input.userId, input.scenarioId]))[0];
+      const prevBest = prevMastery?.bestStars ?? 0;
+      const masteryDelta = Math.max(0, earnedStars - prevBest);
+
+      if (masteryDelta > 0) {
+        const masteryEvent = await this.appendLedgerEventOn(client, {
+          userId: input.userId,
+          kind: "mastery_awarded",
+          amount: masteryDelta,
+          reason: "scenario_quality",
+          promo: false,
+          runId: input.runId,
+          scenarioId: input.scenarioId,
+          idempotencyKey: `run:${input.runId}:mastery`,
+          createdAt: now
+        });
+        events.push(masteryEvent.event);
+      }
+
+      await queryRows(client, `
+        INSERT INTO user_scenario_mastery (user_id, scenario_id, best_stars, best_score, updated_at)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (user_id, scenario_id) DO UPDATE SET
+          best_stars = GREATEST(user_scenario_mastery.best_stars, EXCLUDED.best_stars),
+          best_score = GREATEST(user_scenario_mastery.best_score, EXCLUDED.best_score),
+          updated_at = EXCLUDED.updated_at
+      `, [input.userId, input.scenarioId, earnedStars, input.qualityScore, now]);
+
+      await queryRows(client, `
+        INSERT INTO scenario_completions (
+          user_id, scenario_id, scenario_version, completions, best_score,
+          first_completed_at, last_completed_at
+        ) VALUES ($1, $2, $3, 1, $4, $5, $5)
+        ON CONFLICT (user_id, scenario_id, scenario_version) DO UPDATE SET
+          completions = scenario_completions.completions + 1,
+          best_score = GREATEST(scenario_completions.best_score, EXCLUDED.best_score),
+          last_completed_at = EXCLUDED.last_completed_at
+      `, [input.userId, input.scenarioId, input.scenarioVersion, input.qualityScore, now]);
+
+      const rewardGrantId = randomUUID();
+      await queryRows(client, `
+        INSERT INTO reward_grants (
+          reward_grant_id, user_id, run_id, scenario_id, xp_granted, mastery_delta, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [rewardGrantId, input.userId, input.runId, input.scenarioId, xpGranted, masteryDelta, now]);
+
+      const state = (await this.readEconomyState(client, input.userId))!;
+      await client.query("COMMIT;");
+      return { granted: true, rewardGrantId, xpGranted, masteryDelta, events, state };
+    } catch (error) {
+      await client.query("ROLLBACK;");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  public async listLedgerEvents(
+    userId: string,
+    options: ListLedgerEventsOptions = {}
+  ): Promise<LedgerPage> {
+    const limit = Math.max(1, Math.min(100, options.limit ?? 20));
+    const after = options.after ?? null;
+
+    let rows: LedgerDbRow[];
+    if (after) {
+      const anchor = (await queryRows<{ createdAt: unknown; id: string }>(this.pool, `
+        SELECT created_at AS "createdAt", id
+        FROM ledger_events
+        WHERE id = $1 AND user_id = $2
+      `, [after, userId]))[0];
+      if (!anchor) {
+        throw new Error(`invalid ledger cursor: ${after}`);
+      }
+      const anchorAt = readRequiredTimestamp(anchor.createdAt);
+      rows = await queryRows<LedgerDbRow>(this.pool, `
+        SELECT ${LEDGER_EVENT_SELECT_COLUMNS}
+        FROM ledger_events
+        WHERE user_id = $1
+          AND (created_at < $2 OR (created_at = $2 AND id < $3))
+        ORDER BY created_at DESC, id DESC
+        LIMIT $4
+      `, [userId, anchorAt, anchor.id, limit]);
+    } else {
+      rows = await queryRows<LedgerDbRow>(this.pool, `
+        SELECT ${LEDGER_EVENT_SELECT_COLUMNS}
+        FROM ledger_events
+        WHERE user_id = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT $2
+      `, [userId, limit]);
+    }
+
+    const events = rows.map((row) => this.mapLedgerRow(row));
+    const nextCursor = rows.length === limit ? rows[rows.length - 1]!.id : null;
+    return { events, nextCursor };
+  }
+
+  // --- Academy Level 0 learning persistence (Iteration 04 Phase 2) ----------
+
+  public async upsertLearningModule(
+    input: UpsertLearningModuleInput
+  ): Promise<LearningModuleRecord> {
+    const content = AcademyModuleSchema.parse(input.content);
+    const now = new Date().toISOString();
+    await queryRows(this.pool, `
+      INSERT INTO learning_modules (
+        module_id, version, title, level, content_json, status, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8)
+      ON CONFLICT(module_id, version) DO UPDATE SET
+        title = excluded.title,
+        level = excluded.level,
+        content_json = excluded.content_json,
+        status = excluded.status,
+        updated_at = excluded.updated_at
+    `, [
+      content.moduleId, content.version, input.title, input.level,
+      JSON.stringify(content), input.status, now, now
+    ]);
+    return (await this.getLearningModule(content.moduleId, content.version))!;
+  }
+
+  public async getLearningModule(
+    moduleId: string,
+    version: string
+  ): Promise<LearningModuleRecord | undefined> {
+    const row = (await queryRows<{
+      moduleId: string;
+      version: string;
+      title: string;
+      level: number;
+      contentJson: unknown;
+      status: string;
+      createdAt: unknown;
+      updatedAt: unknown;
+    }>(this.pool, `
+      SELECT
+        module_id AS "moduleId", version, title, level,
+        content_json AS "contentJson", status,
+        created_at AS "createdAt", updated_at AS "updatedAt"
+      FROM learning_modules
+      WHERE module_id = $1 AND version = $2
+    `, [moduleId, version]))[0];
+    if (!row) {
+      return undefined;
+    }
+    return {
+      moduleId: row.moduleId,
+      version: row.version,
+      title: row.title,
+      level: row.level,
+      content: AcademyModuleSchema.parse(parseJsonValue(row.contentJson)),
+      status: row.status as LearningPublicationStatus,
+      createdAt: readRequiredTimestamp(row.createdAt),
+      updatedAt: readRequiredTimestamp(row.updatedAt)
+    };
+  }
+
+  public async getModuleProgress(
+    userId: string,
+    moduleId: string,
+    moduleVersion: string
+  ): Promise<ModuleProgressRecord | undefined> {
+    const row = (await queryRows<{
+      userId: string;
+      moduleId: string;
+      moduleVersion: string;
+      status: string;
+      startedAt: unknown;
+      verifiedAt: unknown;
+      masteredAt: unknown;
+      reviewDueAt: unknown;
+      verificationSource: string | null;
+      bestScore: number;
+      version: number;
+    }>(this.pool, `
+      SELECT
+        user_id AS "userId", module_id AS "moduleId", module_version AS "moduleVersion",
+        status, started_at AS "startedAt", verified_at AS "verifiedAt",
+        mastered_at AS "masteredAt", review_due_at AS "reviewDueAt",
+        verification_source AS "verificationSource", best_score AS "bestScore", version
+      FROM user_module_progress
+      WHERE user_id = $1 AND module_id = $2 AND module_version = $3
+    `, [userId, moduleId, moduleVersion]))[0];
+    if (!row) {
+      return undefined;
+    }
+    return {
+      userId: row.userId,
+      moduleId: row.moduleId,
+      moduleVersion: row.moduleVersion,
+      status: row.status as LearningStatus,
+      startedAt: readTimestamp(row.startedAt),
+      verifiedAt: readTimestamp(row.verifiedAt),
+      masteredAt: readTimestamp(row.masteredAt),
+      reviewDueAt: readTimestamp(row.reviewDueAt),
+      verificationSource: (row.verificationSource as VerificationSource | null) ?? null,
+      bestScore: row.bestScore,
+      version: row.version
+    };
+  }
+
+  public async upsertModuleProgress(
+    input: UpsertModuleProgressInput
+  ): Promise<ModuleProgressRecord> {
+    await queryRows(this.pool, `
+      INSERT INTO user_module_progress (
+        user_id, module_id, module_version, status,
+        started_at, verified_at, mastered_at, review_due_at,
+        verification_source, best_score, version
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0)
+      ON CONFLICT(user_id, module_id, module_version) DO UPDATE SET
+        status = excluded.status,
+        started_at = COALESCE(user_module_progress.started_at, excluded.started_at),
+        verified_at = COALESCE(user_module_progress.verified_at, excluded.verified_at),
+        mastered_at = COALESCE(user_module_progress.mastered_at, excluded.mastered_at),
+        review_due_at = COALESCE(excluded.review_due_at, user_module_progress.review_due_at),
+        verification_source = COALESCE(user_module_progress.verification_source, excluded.verification_source),
+        best_score = CASE WHEN excluded.best_score > user_module_progress.best_score
+          THEN excluded.best_score ELSE user_module_progress.best_score END,
+        version = user_module_progress.version + 1
+    `, [
+      input.userId, input.moduleId, input.moduleVersion, input.status,
+      input.startedAt, input.verifiedAt, input.masteredAt, input.reviewDueAt,
+      input.verificationSource, input.bestScore
+    ]);
+    return (await this.getModuleProgress(input.userId, input.moduleId, input.moduleVersion))!;
+  }
+
+  public async createLearningAttempt(
+    input: CreateLearningAttemptInput
+  ): Promise<LearningAttemptRecord> {
+    const startedAt = new Date().toISOString();
+    await queryRows(this.pool, `
+      INSERT INTO learning_attempts (
+        attempt_id, user_id, module_id, module_version, attempt_type,
+        scenario_id, scenario_version, run_id, status, started_at, completed_at, result_json
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'started', $9, NULL, NULL)
+      ON CONFLICT(attempt_id) DO NOTHING
+    `, [
+      input.attemptId, input.userId, input.moduleId, input.moduleVersion,
+      input.attemptType, input.scenarioId, input.scenarioVersion, input.runId, startedAt
+    ]);
+    return (await this.getLearningAttempt(input.attemptId, input.userId))!;
+  }
+
+  public async getLearningAttempt(
+    attemptId: string,
+    userId: string
+  ): Promise<LearningAttemptRecord | undefined> {
+    const row = (await queryRows<{
+      attemptId: string;
+      userId: string;
+      moduleId: string;
+      moduleVersion: string;
+      attemptType: string;
+      scenarioId: string;
+      scenarioVersion: string;
+      runId: string | null;
+      status: string;
+      startedAt: unknown;
+      completedAt: unknown;
+      resultJson: unknown;
+    }>(this.pool, `
+      SELECT
+        attempt_id AS "attemptId", user_id AS "userId", module_id AS "moduleId",
+        module_version AS "moduleVersion", attempt_type AS "attemptType",
+        scenario_id AS "scenarioId", scenario_version AS "scenarioVersion",
+        run_id AS "runId", status, started_at AS "startedAt",
+        completed_at AS "completedAt", result_json AS "resultJson"
+      FROM learning_attempts
+      WHERE attempt_id = $1 AND user_id = $2
+    `, [attemptId, userId]))[0];
+    if (!row) {
+      return undefined;
+    }
+    return {
+      attemptId: row.attemptId,
+      userId: row.userId,
+      moduleId: row.moduleId,
+      moduleVersion: row.moduleVersion,
+      attemptType: row.attemptType as LearningAttemptRecord["attemptType"],
+      scenarioId: row.scenarioId,
+      scenarioVersion: row.scenarioVersion,
+      runId: row.runId,
+      status: row.status as LearningAttemptRecord["status"],
+      startedAt: readRequiredTimestamp(row.startedAt),
+      completedAt: readTimestamp(row.completedAt),
+      result: parseJsonValue(row.resultJson)
+    };
+  }
+
+  public async finalizeLearningAttempt(
+    input: FinalizeLearningAttemptInput
+  ): Promise<LearningAttemptRecord> {
+    const current = await this.getLearningAttempt(input.attemptId, input.userId);
+    if (!current) {
+      throw new Error(`Learning attempt was not found: ${input.attemptId}`);
+    }
+    if (current.status !== "started") {
+      return current;
+    }
+    await queryRows(this.pool, `
+      UPDATE learning_attempts
+      SET status = $1, completed_at = $2, result_json = $3::jsonb
+      WHERE attempt_id = $4 AND user_id = $5 AND status = 'started'
+    `, [
+      input.status, new Date().toISOString(), JSON.stringify(input.result),
+      input.attemptId, input.userId
+    ]);
+    return (await this.getLearningAttempt(input.attemptId, input.userId))!;
+  }
+
+  public async appendDecisionEvents(
+    events: readonly DecisionEventRecord[]
+  ): Promise<AppendDecisionEventsResult> {
+    if (events.length === 0) {
+      return { accepted: 0, duplicates: 0 };
+    }
+    let accepted = 0;
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN;");
+      for (const event of events) {
+        const result = await client.query(`
+          INSERT INTO decision_events (
+            event_id, user_id, session_id, event_type, event_version, sequence,
+            occurred_at, server_received_at, client_elapsed_ms,
+            run_id, scenario_id, scenario_version, module_id, skill_ids, payload_json
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::jsonb, $15::jsonb)
+          ON CONFLICT (event_id) DO NOTHING
+        `, [
+          event.eventId, event.userId, event.sessionId, event.eventType,
+          event.eventVersion, event.sequence, event.occurredAt,
+          event.serverReceivedAt, event.clientElapsedMs, event.runId,
+          event.scenarioId, event.scenarioVersion, event.moduleId,
+          JSON.stringify(event.skillIds), JSON.stringify(event.payload)
+        ]);
+        if ((result.rowCount ?? 0) > 0) accepted += 1;
+      }
+      await client.query("COMMIT;");
+    } catch (error) {
+      await client.query("ROLLBACK;");
+      throw error;
+    } finally {
+      client.release();
+    }
+    return { accepted, duplicates: events.length - accepted };
+  }
+
+  public async listDecisionEventsByRun(
+    userId: string,
+    runId: string
+  ): Promise<DecisionEventRecord[]> {
+    const rows = await queryRows<{
+      eventId: string;
+      userId: string;
+      sessionId: string;
+      eventType: string;
+      eventVersion: number;
+      sequence: number;
+      occurredAt: unknown;
+      serverReceivedAt: unknown;
+      clientElapsedMs: number;
+      runId: string | null;
+      scenarioId: string | null;
+      scenarioVersion: string | null;
+      moduleId: string | null;
+      skillIds: unknown;
+      payloadJson: unknown;
+    }>(this.pool, `
+      SELECT
+        event_id AS "eventId", user_id AS "userId", session_id AS "sessionId",
+        event_type AS "eventType", event_version AS "eventVersion", sequence,
+        occurred_at AS "occurredAt", server_received_at AS "serverReceivedAt",
+        client_elapsed_ms AS "clientElapsedMs", run_id AS "runId",
+        scenario_id AS "scenarioId", scenario_version AS "scenarioVersion",
+        module_id AS "moduleId", skill_ids AS "skillIds", payload_json AS "payloadJson"
+      FROM decision_events
+      WHERE user_id = $1 AND run_id = $2
+      ORDER BY sequence ASC, occurred_at ASC, event_id ASC
+    `, [userId, runId]);
+
+    return rows.map((row) => ({
+      eventId: row.eventId,
+      userId: row.userId,
+      sessionId: row.sessionId,
+      eventType: row.eventType as DecisionEventType,
+      eventVersion: row.eventVersion,
+      sequence: row.sequence,
+      occurredAt: readRequiredTimestamp(row.occurredAt),
+      serverReceivedAt: readRequiredTimestamp(row.serverReceivedAt),
+      clientElapsedMs: row.clientElapsedMs,
+      runId: row.runId,
+      scenarioId: row.scenarioId,
+      scenarioVersion: row.scenarioVersion,
+      moduleId: row.moduleId,
+      skillIds: (parseJsonValue(row.skillIds) as string[] | null) ?? [],
+      payload: (parseJsonValue(row.payloadJson) as TelemetryPayload | null) ?? {}
+    }));
   }
 }
